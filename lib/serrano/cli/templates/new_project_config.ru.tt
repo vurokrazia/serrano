@@ -1,0 +1,8 @@
+require "serrano"
+<% if config_db_require_line -%>
+<%= config_db_require_line %>
+<% end -%>
+
+app = Serrano::Application.new
+
+run app
