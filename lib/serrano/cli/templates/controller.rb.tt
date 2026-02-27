@@ -1,0 +1,59 @@
+# frozen_string_literal: true
+
+require "json"
+
+class <%= resource[:plural_camel] %>Controller
+  def create(request)
+    result = <%= resource[:plural_camel] %>::Services::Create.new.call(request.params)
+
+    if result[:ok]
+      return Serrano::Response.new(
+        status: 201,
+        headers: { "content-type" => "application/json" },
+        body: JSON.generate(result[:<%= resource[:singular_snake] %>].to_h)
+      )
+    end
+
+    Serrano::Response.new(
+      status: 422,
+      headers: { "content-type" => "application/json" },
+      body: JSON.generate({ errors: result[:errors] })
+    )
+  end
+
+  def update(request)
+    result = <%= resource[:plural_camel] %>::Services::Update.new.call(request["id"], request.params)
+
+    if result[:ok]
+      return Serrano::Response.new(
+        status: 200,
+        headers: { "content-type" => "application/json" },
+        body: JSON.generate(result[:<%= resource[:singular_snake] %>].to_h)
+      )
+    end
+
+    Serrano::Response.new(
+      status: 422,
+      headers: { "content-type" => "application/json" },
+      body: JSON.generate({ errors: result[:errors] })
+    )
+  end
+
+  def destroy(request)
+    result = <%= resource[:plural_camel] %>::Services::Destroy.new.call(request["id"])
+
+    if result[:ok]
+      return Serrano::Response.new(
+        status: 200,
+        headers: { "content-type" => "application/json" },
+        body: JSON.generate({ deleted: true })
+      )
+    end
+
+    Serrano::Response.new(
+      status: 422,
+      headers: { "content-type" => "application/json" },
+      body: JSON.generate({ errors: result[:errors] })
+    )
+  end
+end

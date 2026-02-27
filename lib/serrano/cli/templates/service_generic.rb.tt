@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+module Services
+<% module_path.each do |name| -%>
+  module <%= name %>
+<% end -%>
+    class <%= service_class_name %>
+      def call(*_args)
+        raise NotImplementedError
+      end
+    end
+<% module_path.each do |_name| -%>
+  end
+<% end -%>
+end

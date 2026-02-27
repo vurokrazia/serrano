@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+class <%= resource[:singular_camel] %>
+  def initialize(attrs = {})
+    @attrs = attrs || {}
+  end
+
+  def to_h
+    @attrs
+  end
+end

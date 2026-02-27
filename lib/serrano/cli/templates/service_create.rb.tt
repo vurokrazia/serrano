@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+require_relative "../../repositories/<%= resource[:singular_snake] %>_repository"
+
+module <%= resource[:plural_camel] %>
+  module Services
+    class Create
+      def initialize(repository = <%= resource[:singular_camel] %>Repository.new)
+        @repository = repository
+      end
+
+      def call(params)
+        title = params["title"].to_s.strip
+        return { ok: false, errors: ["title is required"] } if title.empty?
+
+        <%= resource[:singular_snake] %> = @repository.create(
+          "title" => title,
+          "content" => params["content"]
+        )
+
+        { ok: true, <%= resource[:singular_snake] %>: <%= resource[:singular_snake] %> }
+      end
+    end
+  end
+end

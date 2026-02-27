@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+require_relative "../entities/<%= resource[:singular_snake] %>"
+require_relative "../../config/db"
+
+class <%= resource[:singular_camel] %>Repository
+  def initialize(dataset = DB[:<%= resource[:plural_snake] %>])
+    @dataset = dataset
+  end
+
+  def create(attrs)
+    now = Time.now
+    id = @dataset.insert(attrs.merge(created_at: now, updated_at: now))
+    row = @dataset.where(id: id).first
+    <%= resource[:singular_camel] %>.new(row)
+  end
+
+  def update(id, attrs)
+    @dataset.where(id: id).update(attrs.merge(updated_at: Time.now))
+    row = @dataset.where(id: id).first
+    row && <%= resource[:singular_camel] %>.new(row)
+  end
+
+  def destroy(id)
+    @dataset.where(id: id).delete.positive?
+  end
+end
