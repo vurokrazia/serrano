@@ -1,0 +1,6 @@
+require "serrano"
+require_relative "config/db"
+
+app = Serrano::Application.new
+
+run app

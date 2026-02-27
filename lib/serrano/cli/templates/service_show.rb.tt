@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+require_relative "../../repositories/<%= resource[:singular_snake] %>_repository"
+
+module <%= resource[:plural_camel] %>
+  module Services
+    class Show
+      def initialize(repository = <%= resource[:singular_camel] %>Repository.new)
+        @repository = repository
+      end
+
+      def call(id)
+        item = @repository.find(id.to_i)
+        return { ok: false, errors: ["<%= resource[:singular_snake] %> not found"] } unless item
+
+        { ok: true, <%= resource[:singular_snake] %>: item }
+      end
+    end
+  end
+end

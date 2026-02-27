@@ -17,6 +17,10 @@ module Serrano
       @router.add('POST', path, controller, action)
     end
 
+    def put(path, controller, action)
+      @router.add('PUT', path, controller, action)
+    end
+
     def call(env)
       @dispatcher.call(env)
     end

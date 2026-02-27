@@ -1,8 +1,41 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../services/<%= resource[:plural_snake] %>/index"
+require_relative "../services/<%= resource[:plural_snake] %>/show"
+require_relative "../services/<%= resource[:plural_snake] %>/create"
+require_relative "../services/<%= resource[:plural_snake] %>/update"
+require_relative "../services/<%= resource[:plural_snake] %>/destroy"
 
 class <%= resource[:plural_camel] %>Controller
+  def index(_request)
+    result = <%= resource[:plural_camel] %>::Services::Index.new.call
+
+    Serrano::Response.new(
+      status: 200,
+      headers: { "content-type" => "application/json" },
+      body: JSON.generate(result[:items].map(&:to_h))
+    )
+  end
+
+  def show(request)
+    result = <%= resource[:plural_camel] %>::Services::Show.new.call(request["id"])
+
+    if result[:ok]
+      return Serrano::Response.new(
+        status: 200,
+        headers: { "content-type" => "application/json" },
+        body: JSON.generate(result[:<%= resource[:singular_snake] %>].to_h)
+      )
+    end
+
+    Serrano::Response.new(
+      status: 404,
+      headers: { "content-type" => "application/json" },
+      body: JSON.generate({ errors: result[:errors] })
+    )
+  end
+
   def create(request)
     result = <%= resource[:plural_camel] %>::Services::Create.new.call(request.params)
 

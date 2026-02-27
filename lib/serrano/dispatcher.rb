@@ -21,7 +21,8 @@ module Serrano
       request.set_path_params(route[:path_params] || {})
       result = controller.public_send(route[:action], request)
       Response.normalize(result)
-    rescue StandardError
+    rescue StandardError => e
+      log_internal_error(e)
       Response.new(
         status: 500,
         headers: { 'content-type' => 'application/json' },
@@ -48,6 +49,11 @@ module Serrano
         headers: { 'content-type' => 'application/json' },
         body: '{"error":"Not Found"}'
       ).to_rack
+    end
+
+    def log_internal_error(error)
+      $stderr.puts("[serrano] #{error.class}: #{error.message}")
+      Array(error.backtrace).each { |line| $stderr.puts(line) }
     end
   end
 end

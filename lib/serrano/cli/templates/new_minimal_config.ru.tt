@@ -1,0 +1,5 @@
+require "serrano"
+
+app = Serrano::Application.new
+
+run app

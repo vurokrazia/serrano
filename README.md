@@ -42,7 +42,7 @@ Serrano is currently intended for local usage and is not published as a remote g
 
 ---
 
-## Quick Start
+## Core Quick Start
 
 1. `config.ru`
 
@@ -120,7 +120,14 @@ This contract is deterministic and intentionally minimal: each controller result
 
 ---
 
-## Routing
+## Routing & HTTP Behavior
+
+Runtime DSL:
+
+```ruby
+app.get "/users", UsersController, :index
+app.post "/users", UsersController, :create
+```
 
 Static route:
 
@@ -145,7 +152,7 @@ Behavior:
 
 - Unknown path -> `404` JSON: `{"error":"Not Found"}`
 - Known path with unsupported method -> `405` JSON: `{"error":"Method Not Allowed"}`
-- `405` responses include `allow` header with allowed methods
+- `405` responses include lowercase `allow` header with allowed methods
 
 ---
 
@@ -162,24 +169,93 @@ No stack trace is exposed in the HTTP response. This is intentional for safety.
 
 ---
 
+## Productivity Layer (Phase 2)
+
+Serrano includes an optional CLI scaffolding layer built with Thor. The CLI depends on core; core runtime does not depend on Thor.
+
+Entry points:
+
+- `bin/serrano`
+- `lib/serrano/cli/base.rb`
+- `lib/serrano/cli/generate.rb`
+- `lib/serrano/cli/templates/*`
+
+Available generation commands:
+
+```bash
+bundle exec ruby bin/serrano generate resource Article title:string content:text
+bundle exec ruby bin/serrano generate controller Name
+bundle exec ruby bin/serrano generate service Namespace::Name
+bundle exec ruby bin/serrano generate repository Name
+```
+
+`generate resource` creates:
+
+- controller
+- services (`create`, `update`, `destroy`)
+- repository
+- entity
+- migration with timestamp
+
+Route handling remains explicit: the generator prints route snippets as suggestions and does not modify `config.ru`.
+
+---
+
+## Example App (`examples/basic_app`)
+
+The example app validates architecture and flow outside framework core:
+
+`controllers -> services -> repositories -> sequel/db`
+
+Setup and run:
+
+```bash
+cd examples/basic_app
+bundle install
+bundle exec sequel -m db/migrations sqlite://db/development.sqlite3
+bundle exec rackup
+```
+
+Verification:
+
+```bash
+curl -i http://localhost:9292/users
+curl -i -X POST "http://localhost:9292/articles" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-raw "title=My%20Article&content=Hello"
+curl -i -X POST "http://localhost:9292/articles" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-raw "content=Missing%20title"
+```
+
+Expected:
+
+- `GET /users` -> `200`
+- `POST /articles` with title -> `201`
+- `POST /articles` without title -> `422` (`{"errors":["title is required"]}`)
+
+---
+
 ## Current Scope
 
 Serrano currently does not include:
 
-- No ORM
+- No ORM in framework core
 - No built-in middleware stack
 - No autoloading
-- No CLI
-- No generators
 - No dependency injection container
 
-Application architecture (services, repositories, domain layering, etc.) is intentionally external to the framework core.
+Notes:
+
+- Core runtime has no generators; optional CLI layer provides scaffolding.
+- Example app uses Sequel externally; ORM/database concerns are not built into core.
+- Application architecture (services, repositories, domain layering, etc.) remains external to framework runtime.
 
 ---
 
 ## Project Structure
 
-Framework core:
+Core runtime:
 
 ```text
 lib/serrano/
@@ -190,11 +266,33 @@ lib/serrano/
   dispatcher.rb
 ```
 
-Separation:
+CLI scaffolding layer:
 
-- Framework core lives in `lib/serrano/`
-- Core tests live under `test/` (including `test/core`)
-- Example app lives in `examples/basic_app`
+```text
+bin/serrano
+lib/serrano/cli/
+  base.rb
+  generate.rb
+  templates/
+```
+
+Example app:
+
+```text
+examples/basic_app/
+  config.ru
+  config/db.rb
+  app/controllers/
+  app/services/
+  app/repositories/
+  app/entities/
+  db/migrations/
+```
+
+Tests:
+
+- `test/core` for core-level behavior
+- `test/unknown_route_test.rb` for additional route invariant checks
 
 ---
 

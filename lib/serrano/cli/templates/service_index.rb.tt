@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+require_relative "../../repositories/<%= resource[:singular_snake] %>_repository"
+
+module <%= resource[:plural_camel] %>
+  module Services
+    class Index
+      def initialize(repository = <%= resource[:singular_camel] %>Repository.new)
+        @repository = repository
+      end
+
+      def call
+        { ok: true, items: @repository.all }
+      end
+    end
+  end
+end

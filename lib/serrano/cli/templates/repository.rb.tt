@@ -8,6 +8,15 @@ class <%= resource[:singular_camel] %>Repository
     @dataset = dataset
   end
 
+  def all
+    @dataset.all.map { |row| <%= resource[:singular_camel] %>.new(row) }
+  end
+
+  def find(id)
+    row = @dataset.where(id: id).first
+    row && <%= resource[:singular_camel] %>.new(row)
+  end
+
   def create(attrs)
     now = Time.now
     id = @dataset.insert(attrs.merge(created_at: now, updated_at: now))

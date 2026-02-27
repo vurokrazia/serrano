@@ -10,12 +10,19 @@ module <%= resource[:plural_camel] %>
       end
 
       def call(params)
-        title = params["title"].to_s.strip
-        return { ok: false, errors: ["title is required"] } if title.empty?
+<% if required_field -%>
+        required_value = params["<%= required_field[:name] %>"].to_s.strip
+        return { ok: false, errors: ["<%= required_field[:name] %> is required"] } if required_value.empty?
+<% end -%>
 
         <%= resource[:singular_snake] %> = @repository.create(
-          "title" => title,
-          "content" => params["content"]
+<% if fields.empty? -%>
+          {}
+<% else -%>
+<% fields.each_with_index do |field, index| -%>
+          "<%= field[:name] %>" => params["<%= field[:name] %>"]<%= "," unless index == fields.length - 1 %>
+<% end -%>
+<% end -%>
         )
 
         { ok: true, <%= resource[:singular_snake] %>: <%= resource[:singular_snake] %> }
