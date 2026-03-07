@@ -1,110 +1,62 @@
 # Serrano
 
-Minimal Rack-based Ruby microframework focused on explicit HTTP contracts and architectural clarity.
+Serrano is a minimal Rack-based Ruby microframework with an explicit HTTP contract and no hidden behavior.
 
 ---
 
 ## What is Serrano
 
-Serrano is a minimal HTTP runtime built on Rack. It provides route resolution, request dispatching, and small request/response abstractions for controller-based applications.
+Serrano provides only the HTTP runtime:
 
-Serrano does not include an ORM, middleware stack, generators, or predefined architecture layers. The core is intentionally explicit and predictable.
+- route registration and matching (`GET`, `POST`, `PUT`, `DELETE`)
+- controller dispatching
+- request and response wrappers
+- strict error-to-response mapping
 
----
+Serrano is intentionally small. It does not include:
 
-## Philosophy
+- an ORM
+- middleware stacks
+- dependency injection containers
+- architecture conventions beyond thin controller/service/repository layering
 
-- Explicit over magic
-- Minimal surface area
-- Deterministic controller return contract
-- No hidden behavior
-- Clear separation between framework core and application architecture
-- HTTP-first design
-
-Serrano keeps the framework core small so request flow is easy to understand and reason about. Routing, dispatching, and response normalization are explicit and visible in code.
-
-It avoids built-in ORM, middleware stacks, and heavy abstractions to prevent implicit coupling. Data access, services, repositories, and other architectural choices are application concerns, not framework defaults.
+If you want database or CRUD tooling, use the optional CLI and example scaffolding layer.
 
 ---
 
-## Installation
+## Core Contracts
 
-- Ruby `>= 3.2` required
-- Compatible with Ruby `3.4+`
+- Supported methods: `GET`, `POST`, `PUT`, `DELETE`
+- Route DSL:
+  - `get(path, controller, action)`
+  - `post(path, controller, action)`
+  - `put(path, controller, action)`
+  - `delete(path, controller, action)`
+- Controller return values:
+  - `Hash` => JSON response, status `200`
+  - `String` => `text/plain`, status `200`
+  - `Serrano::Response` => use as-is
+  - other values => `500` with `Internal Server Error`
+- Missing route => `404 Not Found`
+- Missing method for existing path => `405 Method Not Allowed` with lowercase `allow` header and supported methods
 
-Local development usage (path gem):
-
-```ruby
-gem "serrano", path: "../serrano"
-```
-
-Serrano is currently intended for local usage and is not published as a remote gem.
+See [EXAMPLES.md](./EXAMPLES.md) for full request/response demos.
 
 ---
 
-## Prepare as a Gem (No Publish)
+## Installation (local development)
 
-To use Serrano as a Ruby gem without publishing:
-
-1. Create a gemspec
-
-Include at least:
-
-- name `serrano`
-- version (e.g. `0.1.0`)
-- summary and description
-- files list (including `lib/**`, `bin/serrano`, templates, `README.md`, and license)
-- required Ruby version (`>= 3.2`)
-- runtime dependency on `rack >= 2.2`
-
-2. Add version constant
-
-Expose a constant at runtime so the gemspec can read it:
+- Ruby `>= 3.2`
+- Add to your app Gemfile:
 
 ```ruby
-# lib/serrano/version.rb
-module Serrano
-  VERSION = "0.1.0"
-end
+# Gemfile
+ruby '3.4.0'
+
+gem 'serrano', path: '../serrano'
 ```
 
-3. Reference the version in `lib/serrano.rb`
-
-```ruby
-require_relative "serrano/version"
-```
-
-4. (Optional) Build and install locally
-
-```bash
-gem build serrano.gemspec
-gem install --local serrano-0.1.0.gem
-```
-
-5. Use in another app without publishing
-
-With local path:
-
-```ruby
-gem "serrano", path: "../serrano"
-```
-
-With Git dependency:
-
-```ruby
-gem "serrano", git: "git@github.com:vurokrazia/serrano.git", branch: "master"
-```
-
-After this, `gem "serrano"` must resolve from the local gemspec.  
-Until the above is in place, only `require_relative` loading from a checked-out repo works.
-
-Now that the gemspec exists, this is supported in another app:
-
-```ruby
-gem "serrano", git: "git@github.com:vurokrazia/serrano.git", branch: "master"
-```
-
-Then run in that app:
+Run:
 
 ```bash
 bundle install
@@ -112,14 +64,14 @@ bundle install
 
 ---
 
-## Core Quick Start
+## Quick Start (Core only)
 
-1. `config.ru`
+`config.ru`:
 
 ```ruby
 # frozen_string_literal: true
 
-require_relative "./lib/serrano"
+require 'serrano'
 
 class UsersController
   def index(_request)
@@ -128,198 +80,44 @@ class UsersController
 end
 
 app = Serrano::Application.new
-app.get "/users", UsersController, :index
+app.get('/users', UsersController, :index)
 
 run app
 ```
 
-2. Run:
+Run:
 
 ```bash
 bundle exec rackup
 ```
 
-3. Test:
+Quick check:
 
 ```bash
-curl http://localhost:9292/users
+curl -i http://localhost:9292/users
 ```
 
 ---
 
-## Controller Return Contract (IMPORTANT)
+## Productivity Layer (CLI)
 
-Controllers may return:
+The CLI is optional and depends on the core runtime.
 
-- `Hash` -> `200` with `application/json`
-- `String` -> `200` with `text/plain`
-- `Serrano::Response` -> respected as-is (`status`, `headers`, `body`)
-- Raise `StandardError` -> `500` with JSON error body
-
-Examples:
-
-```ruby
-def hash_case(_request)
-  { ok: true }
-end
-```
-
-```ruby
-def string_case(_request)
-  "hello"
-end
-```
-
-```ruby
-def custom_response(_request)
-  Serrano::Response.new(
-    status: 201,
-    headers: { "content-type" => "application/json" },
-    body: '{"created":true}'
-  )
-end
-```
-
-```ruby
-def error_case(_request)
-  raise "boom"
-end
-```
-
-This contract is deterministic and intentionally minimal: each controller result maps to a single normalized HTTP behavior.
-
----
-
-## Routing & HTTP Behavior
-
-Runtime DSL:
-
-```ruby
-app.get "/users", UsersController, :index
-app.post "/users", UsersController, :create
-```
-
-Static route:
-
-```ruby
-app.get "/users", UsersController, :index
-```
-
-Dynamic route parameter:
-
-```ruby
-app.get "/users/:id", UsersController, :show
-```
-
-Parameter access in controllers:
-
-```ruby
-request.params["id"]
-request["id"]
-```
-
-Behavior:
-
-- Unknown path -> `404` JSON: `{"error":"Not Found"}`
-- Known path with unsupported method -> `405` JSON: `{"error":"Method Not Allowed"}`
-- `405` responses include lowercase `allow` header with allowed methods
-
----
-
-## Error Handling
-
-Exceptions raised during controller execution are handled at dispatcher level.
-
-Serrano returns:
-
-- Status `500`
-- JSON body `{"error":"Internal Server Error"}`
-
-No stack trace is exposed in the HTTP response. This is intentional for safety.
-
----
-
-## Productivity Layer (Phase 2)
-
-Serrano includes an optional CLI scaffolding layer built with Thor. The CLI depends on core; core runtime does not depend on Thor.
-
-Entry points:
-
-- `bin/serrano`
-- `lib/serrano/cli/base.rb`
-- `lib/serrano/cli/generate.rb`
-- `lib/serrano/cli/templates/*`
-
-Available generation commands:
+### Available commands
 
 ```bash
+bundle exec ruby bin/serrano new APP_NAME [--minimal] [--db=sqlite|postgres|mysql]
 bundle exec ruby bin/serrano generate resource Article title:string content:text
 bundle exec ruby bin/serrano generate controller Name
 bundle exec ruby bin/serrano generate service Namespace::Name
 bundle exec ruby bin/serrano generate repository Name
 ```
 
-`generate resource` creates:
+- `new` creates project files (minimal mode and DB options are orthogonal)
+- `generate resource` creates controller, services (`index`, `show`, `create`, `update`, `destroy`), repository, entity, migration
+- route code is suggested in terminal output; automatic `config.ru` route editing is handled by generator logic when app file exists
 
-- controller
-- services (`create`, `update`, `destroy`)
-- repository
-- entity
-- migration with timestamp
-
-Route handling remains explicit: the generator prints route snippets as suggestions and does not modify `config.ru`.
-
----
-
-## Example App (`examples/basic_app`)
-
-The example app validates architecture and flow outside framework core:
-
-`controllers -> services -> repositories -> sequel/db`
-
-Setup and run:
-
-```bash
-cd examples/basic_app
-bundle install
-bundle exec sequel -m db/migrations sqlite://db/development.sqlite3
-bundle exec rackup
-```
-
-Verification:
-
-```bash
-curl -i http://localhost:9292/users
-curl -i -X POST "http://localhost:9292/articles" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-raw "title=My%20Article&content=Hello"
-curl -i -X POST "http://localhost:9292/articles" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-raw "content=Missing%20title"
-```
-
-Expected:
-
-- `GET /users` -> `200`
-- `POST /articles` with title -> `201`
-- `POST /articles` without title -> `422` (`{"errors":["title is required"]}`)
-
----
-
-## Current Scope
-
-Serrano currently does not include:
-
-- No ORM in framework core
-- No built-in middleware stack
-- No autoloading
-- No dependency injection container
-
-Notes:
-
-- Core runtime has no generators; optional CLI layer provides scaffolding.
-- Example app uses Sequel externally; ORM/database concerns are not built into core.
-- Application architecture (services, repositories, domain layering, etc.) remains external to framework runtime.
+For full command usage with sample outputs and full flows, read [EXAMPLES.md](./EXAMPLES.md).
 
 ---
 
@@ -330,50 +128,38 @@ Core runtime:
 ```text
 lib/serrano/
   application.rb
-  router.rb
+  cli/
+  dispatcher.rb
   request.rb
   response.rb
-  dispatcher.rb
+  router.rb
 ```
 
-CLI scaffolding layer:
+Example app (optional):
 
 ```text
-bin/serrano
-lib/serrano/cli/
-  base.rb
-  generate.rb
-  templates/
+app/
+  controllers/
+  services/
+  repositories/
+  entities/
+config/
+  db.rb
+config.ru
 ```
-
-Example app:
-
-```text
-examples/basic_app/
-  config.ru
-  config/db.rb
-  app/controllers/
-  app/services/
-  app/repositories/
-  app/entities/
-  db/migrations/
-```
-
-Tests:
-
-- `test/core` for core-level behavior
-- `test/unknown_route_test.rb` for additional route invariant checks
 
 ---
 
-## Running Core Tests
+## Testing
 
-Core tests are under `test/core` and use `Rack::MockRequest` to exercise the framework without depending on the example app.
+Core tests are isolated under:
 
-Run:
+- `test/core/*`
+
+Run all tests:
 
 ```bash
-ruby test/core/http_core_test.rb
+bundle exec rake test
 ```
 
 ---

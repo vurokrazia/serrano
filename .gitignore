@@ -1,2 +1,5 @@
 dummies
 tmp/
+examples/demo_crud/vendor
+examples/demo_crud/.bundler_home
+examples
