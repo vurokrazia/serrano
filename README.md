@@ -42,6 +42,76 @@ Serrano is currently intended for local usage and is not published as a remote g
 
 ---
 
+## Prepare as a Gem (No Publish)
+
+To use Serrano as a Ruby gem without publishing:
+
+1. Create a gemspec
+
+Include at least:
+
+- name `serrano`
+- version (e.g. `0.1.0`)
+- summary and description
+- files list (including `lib/**`, `bin/serrano`, templates, `README.md`, and license)
+- required Ruby version (`>= 3.2`)
+- runtime dependency on `rack >= 2.2`
+
+2. Add version constant
+
+Expose a constant at runtime so the gemspec can read it:
+
+```ruby
+# lib/serrano/version.rb
+module Serrano
+  VERSION = "0.1.0"
+end
+```
+
+3. Reference the version in `lib/serrano.rb`
+
+```ruby
+require_relative "serrano/version"
+```
+
+4. (Optional) Build and install locally
+
+```bash
+gem build serrano.gemspec
+gem install --local serrano-0.1.0.gem
+```
+
+5. Use in another app without publishing
+
+With local path:
+
+```ruby
+gem "serrano", path: "../serrano"
+```
+
+With Git dependency:
+
+```ruby
+gem "serrano", git: "git@github.com:vurokrazia/serrano.git", branch: "master"
+```
+
+After this, `gem "serrano"` must resolve from the local gemspec.  
+Until the above is in place, only `require_relative` loading from a checked-out repo works.
+
+Now that the gemspec exists, this is supported in another app:
+
+```ruby
+gem "serrano", git: "git@github.com:vurokrazia/serrano.git", branch: "master"
+```
+
+Then run in that app:
+
+```bash
+bundle install
+```
+
+---
+
 ## Core Quick Start
 
 1. `config.ru`
