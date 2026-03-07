@@ -83,7 +83,7 @@ end
 ```
 
 - status `500`
-- body `{"error":"Internal Server Error"}`
+- body `{"error":"RuntimeError: boom"}`
 
 ---
 
@@ -132,10 +132,16 @@ request['id']
 
 ## 5) CLI: bootstrap new projects
 
+Use:
+
+```bash
+bundle exec serrano new my_app
+```
+
 ## 5.1 create full project (recommended)
 
 ```bash
-bundle exec ruby bin/serrano new my_app
+bundle exec serrano new my_app
 ```
 
 Generated structure includes `app/`, `config.ru`, `Gemfile`, `config/db.rb`, `db/migrations/`.
@@ -143,7 +149,7 @@ Generated structure includes `app/`, `config.ru`, `Gemfile`, `config/db.rb`, `db
 ## 5.2 create full project + sqlite db
 
 ```bash
-bundle exec ruby bin/serrano new my_app --db=sqlite
+bundle exec serrano new my_app --db=sqlite
 ```
 
 Adds sqlite dependency and DB config.
@@ -151,7 +157,7 @@ Adds sqlite dependency and DB config.
 ## 5.3 minimal project
 
 ```bash
-bundle exec ruby bin/serrano new my_app --minimal
+bundle exec serrano new my_app --minimal
 ```
 
 Only boot files, no app/db scaffolding.
@@ -159,7 +165,7 @@ Only boot files, no app/db scaffolding.
 ## 5.4 minimal + db
 
 ```bash
-bundle exec ruby bin/serrano new my_app --minimal --db=postgres
+bundle exec serrano new my_app --minimal --db=postgres
 ```
 
 Orthogonal behavior: `--minimal` does not disable DB files.
@@ -179,7 +185,7 @@ bundle exec rackup
 ### 6.1 scaffold full resource
 
 ```bash
-bundle exec ruby bin/serrano generate resource Article title:string content:text required:required
+bundle exec serrano generate resource Article title:string content:text
 ```
 
 Creates:
@@ -194,9 +200,9 @@ Creates:
 ### 6.2 generate individual files
 
 ```bash
-bundle exec ruby bin/serrano generate controller Comments
-bundle exec ruby bin/serrano generate service Reports::Monthly
-bundle exec ruby bin/serrano generate repository Comment
+bundle exec serrano generate controller Comments
+bundle exec serrano generate service Reports::Monthly
+bundle exec serrano generate repository Comment
 ```
 
 ---
@@ -233,6 +239,15 @@ Expected mapping:
 - `PUT /articles/:id` -> `update`
 - `DELETE /articles/:id` -> `destroy`
 
+### 7.3 pass params
+
+```bash
+curl -i "http://localhost:9292/articles/1?source=cli"
+curl -i -X POST "http://localhost:9292/articles" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data "title=First&content=Hello"
+```
+
 ---
 
 ## 8) Error demos to reproduce and validate
@@ -262,7 +277,7 @@ end
 Expect:
 
 - `500`
-- body `{"error":"Internal Server Error"}`
+- body `{"error":"StandardError: boom"}`
 
 ---
 

@@ -1,4 +1,4 @@
 source "https://rubygems.org"
 
-gem "serrano"
+gem "serrano-vk"
 gem "rackup"

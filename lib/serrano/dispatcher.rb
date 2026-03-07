@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'json'
+
 module Serrano
   class Dispatcher
     def initialize(router)
@@ -21,11 +23,11 @@ module Serrano
       request.set_path_params(route[:path_params] || {})
       result = controller.public_send(route[:action], request)
       Response.normalize(result)
-    rescue StandardError
+    rescue StandardError => error
       Response.new(
         status: 500,
         headers: { 'content-type' => 'application/json' },
-        body: '{"error":"Internal Server Error"}'
+        body: JSON.generate(error: user_friendly_error_message(error))
       ).to_rack
     end
 
@@ -48,6 +50,21 @@ module Serrano
         headers: { 'content-type' => 'application/json' },
         body: '{"error":"Not Found"}'
       ).to_rack
+    end
+
+    def user_friendly_error_message(error)
+      migration_hint(error.message) || "#{error.class}: #{error.message}"
+    end
+
+    def migration_hint(message)
+      return nil if message.nil?
+
+      normalized = message.downcase
+      return 'Database schema is missing required table/column. Run migrations.' if normalized.match?(%r{
+        no\ such\ table|no\ such\ column|doesn't\ exist|relation\ .*\ does\ not\ exist|table\ .*\ does\ not\ exist|unknown\ column
+      }x)
+
+      nil
     end
   end
 end

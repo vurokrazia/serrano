@@ -38,6 +38,12 @@ class SerranoHttpCoreTest < Minitest::Test
     end
   end
 
+  class MigrationErrorController
+    def index(_request)
+      raise StandardError, "SQLite3::SQLException: no such table: articles"
+    end
+  end
+
   class UsersController
     def new(_request)
       { route: 'static' }
@@ -118,7 +124,19 @@ class SerranoHttpCoreTest < Minitest::Test
 
     assert_equal 500, response.status
     assert_includes response['content-type'], 'application/json'
-    assert_equal({ 'error' => 'Internal Server Error' }, JSON.parse(response.body))
+    assert_equal({ 'error' => 'RuntimeError: boom' }, JSON.parse(response.body))
+  end
+
+  def test_database_schema_error_returns_clear_message
+    app = Serrano::Application.new
+    app.get('/migrate', MigrationErrorController, :index)
+    response = nil
+    with_suppressed_stderr do
+      response = Rack::MockRequest.new(app).get('/migrate')
+    end
+
+    assert_equal 500, response.status
+    assert_equal({ 'error' => 'Database schema is missing required table/column. Run migrations.' }, JSON.parse(response.body))
   end
 
   def test_dynamic_route_params_extraction_and_request_sugar
@@ -201,8 +219,8 @@ class SerranoHttpCoreTest < Minitest::Test
 
     assert_equal 500, response.status
     assert_includes response['content-type'], 'application/json'
-    assert_equal({ 'error' => 'Internal Server Error' }, JSON.parse(response.body))
-    refute_includes response.body, 'NoMethodError'
+    parsed = JSON.parse(response.body)
+    assert_match(%r{\ANoMethodError:\sundefined method 'show'}, parsed['error'])
     refute_includes response.body, 'backtrace'
   end
 end

@@ -36,24 +36,29 @@ If you want database or CRUD tooling, use the optional CLI and example scaffoldi
   - `Hash` => JSON response, status `200`
   - `String` => `text/plain`, status `200`
   - `Serrano::Response` => use as-is
-  - other values => `500` with `Internal Server Error`
+  - other values => `500` with JSON error
 - Missing route => `404 Not Found`
 - Missing method for existing path => `405 Method Not Allowed` with lowercase `allow` header and supported methods
+- Controller exceptions => `500` JSON error response. Example: `{"error":"RuntimeError: boom"}`
 
 See [EXAMPLES.md](./EXAMPLES.md) for full request/response demos.
 
 ---
 
-## Installation (local development)
+## Installation (gem)
 
 - Ruby `>= 3.2`
+- Published gem:
+
+  - `serrano-vk` on RubyGems (`~> 0.1.2`)
+
 - Add to your app Gemfile:
 
 ```ruby
 # Gemfile
-ruby '3.4.0'
+source "https://rubygems.org"
 
-gem 'serrano', path: '../serrano'
+gem 'serrano-vk', '~> 0.1.2'
 ```
 
 Run:
@@ -106,16 +111,27 @@ The CLI is optional and depends on the core runtime.
 ### Available commands
 
 ```bash
-bundle exec ruby bin/serrano new APP_NAME [--minimal] [--db=sqlite|postgres|mysql]
-bundle exec ruby bin/serrano generate resource Article title:string content:text
-bundle exec ruby bin/serrano generate controller Name
-bundle exec ruby bin/serrano generate service Namespace::Name
-bundle exec ruby bin/serrano generate repository Name
+bundle exec serrano new APP_NAME [--minimal] [--db=sqlite|postgres|mysql]
+bundle exec serrano generate resource Article title:string content:text
+bundle exec serrano generate controller Name
+bundle exec serrano generate service Namespace::Name
+bundle exec serrano generate repository Name
 ```
 
 - `new` creates project files (minimal mode and DB options are orthogonal)
 - `generate resource` creates controller, services (`index`, `show`, `create`, `update`, `destroy`), repository, entity, migration
-- route code is suggested in terminal output; automatic `config.ru` route editing is handled by generator logic when app file exists
+- route code is printed as suggestions; config.ru updates are explicit and user-managed
+
+### Parameters in requests
+
+Using controller params:
+
+```bash
+curl -i "http://localhost:9292/users/12?foo=abc"
+curl -i -X POST "http://localhost:9292/articles" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data "title=First&content=Hello"
+```
 
 For full command usage with sample outputs and full flows, read [EXAMPLES.md](./EXAMPLES.md).
 
@@ -166,5 +182,5 @@ bundle exec rake test
 
 ## Version
 
-Current version: `0.1.0`  
+Current version: `0.1.2` (gem: serrano-vk)  
 Ruby requirement: `>= 3.2`
