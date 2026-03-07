@@ -148,6 +148,15 @@ Use:
 serrano new my_app
 ```
 
+`serrano new` creates the project structure only. It does not register any routes by itself.
+For first endpoint (`/articles`) do:
+
+```bash
+cd my_app
+serrano generate resource Article title:string content:text
+```
+This command inserts the routes into `config.ru` automatically.
+
 ## 5.1 create full project (recommended)
 
 ```bash

@@ -102,6 +102,9 @@ Quick check:
 curl -i http://localhost:9292/users
 ```
 
+If you used `serrano new`, routes are not present until you generate resources or define them yourself.
+Without matching routes, responses are `404` (path-aware payload).
+
 ---
 
 ## Productivity Layer (CLI)
@@ -120,7 +123,7 @@ serrano generate repository Name
 
 - `new` creates project files (minimal mode and DB options are orthogonal)
 - `generate resource` creates controller, services (`index`, `show`, `create`, `update`, `destroy`), repository, entity, migration
-- route code is printed as suggestions; config.ru updates are explicit and user-managed
+- `generate resource` updates `config.ru` with required `require_relative` and route lines when possible.
 
 ### Parameters in requests
 

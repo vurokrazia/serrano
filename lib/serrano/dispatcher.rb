@@ -16,7 +16,7 @@ module Serrano
         allowed_methods = @router.allowed_methods(request.path)
         return method_not_allowed(allowed_methods) unless allowed_methods.empty?
 
-        return not_found
+        return not_found(request.path)
       end
 
       controller = route[:controller].new
@@ -44,11 +44,11 @@ module Serrano
       ).to_rack
     end
 
-    def not_found
+    def not_found(path)
       Response.new(
         status: 404,
         headers: { 'content-type' => 'application/json' },
-        body: '{"error":"Not Found"}'
+        body: JSON.generate(error: 'Not Found', path: path)
       ).to_rack
     end
 
