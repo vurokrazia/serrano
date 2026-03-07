@@ -2,6 +2,16 @@
 
 This document is the usage cookbook for the framework and CLI.
 
+## 0) Server setup note
+
+Serrano only provides HTTP core + CLI scaffolding. It does not assume a fixed production server.
+In your project, you can run with any Rack-compatible server you prefer (for local quickstart, `rackup` is used in examples).
+
+If you want to use a different server (for example puma, falcon, unicorn), start the app by running that server with your `config.ru`.
+
+- Add `server` gem to your project Gemfile if needed.
+- Keep `config.ru` exposing `run app` as shown below.
+
 ## 1) Core Runtime: Minimal HTTP App
 
 ### 1.1 files
