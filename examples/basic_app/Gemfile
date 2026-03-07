@@ -1,7 +1,0 @@
-source "https://rubygems.org"
-
-gem "rack"
-gem "rackup"
-gem "webrick"
-gem "sequel"
-gem "sqlite3"
