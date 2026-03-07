@@ -7,3 +7,6 @@ gem 'rackup'
 gem 'rubocop', require: false
 gem 'thor', require: false
 gem 'webrick'
+gem 'rake'
+
+gem 'minitest'

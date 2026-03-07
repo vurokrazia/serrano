@@ -1,11 +1,21 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'stringio'
 require 'minitest/autorun'
 require 'rack/mock'
 require_relative '../../lib/serrano'
 
 class SerranoHttpCoreTest < Minitest::Test
+  def with_suppressed_stderr
+    original_stderr = $stderr
+    $stderr = StringIO.new
+
+    yield
+  ensure
+    $stderr = original_stderr
+  end
+
   class HashController
     def index(_request)
       { message: 'ok' }
@@ -101,7 +111,10 @@ class SerranoHttpCoreTest < Minitest::Test
   def test_controller_exception_returns_500_json
     app = Serrano::Application.new
     app.get('/crash', ErrorController, :crash)
-    response = Rack::MockRequest.new(app).get('/crash')
+    response = nil
+    with_suppressed_stderr do
+      response = Rack::MockRequest.new(app).get('/crash')
+    end
 
     assert_equal 500, response.status
     assert_includes response['content-type'], 'application/json'
@@ -181,7 +194,10 @@ class SerranoHttpCoreTest < Minitest::Test
   def test_missing_controller_action_returns_500_json_without_stacktrace
     app = Serrano::Application.new
     app.get('/missing-action', EmptyController, :show)
-    response = Rack::MockRequest.new(app).get('/missing-action')
+    response = nil
+    with_suppressed_stderr do
+      response = Rack::MockRequest.new(app).get('/missing-action')
+    end
 
     assert_equal 500, response.status
     assert_includes response['content-type'], 'application/json'
