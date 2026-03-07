@@ -6,6 +6,7 @@ require_relative 'serrano/router'
 require_relative 'serrano/request'
 require_relative 'serrano/response'
 require_relative 'serrano/dispatcher'
+require_relative 'serrano/validation'
 
 module Serrano
 end

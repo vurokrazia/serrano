@@ -17,7 +17,6 @@ module Serrano
         )
 
         write_template("controller.rb.tt", target_path("app/controllers/#{resource[:plural_snake]}_controller.rb"), context)
-        write_template("entity_validatable.rb.tt", target_path("app/entities/concerns/validatable.rb"), context)
         write_template("service_index.rb.tt", target_path("app/services/#{resource[:plural_snake]}/index.rb"), context)
         write_template("service_show.rb.tt", target_path("app/services/#{resource[:plural_snake]}/show.rb"), context)
         write_template("service_create.rb.tt", target_path("app/services/#{resource[:plural_snake]}/create.rb"), context)

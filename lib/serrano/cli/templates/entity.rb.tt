@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "./concerns/validatable"
-
 class <%= resource[:singular_camel] %>
-  include Validatable
+  include Serrano::Validation
 
 <% fields.each do |field| -%>
 <% rules = [] -%>
