@@ -135,13 +135,13 @@ request['id']
 Use:
 
 ```bash
-bundle exec serrano new my_app
+serrano new my_app
 ```
 
 ## 5.1 create full project (recommended)
 
 ```bash
-bundle exec serrano new my_app
+serrano new my_app
 ```
 
 Generated structure includes `app/`, `config.ru`, `Gemfile`, `config/db.rb`, `db/migrations/`.
@@ -149,7 +149,7 @@ Generated structure includes `app/`, `config.ru`, `Gemfile`, `config/db.rb`, `db
 ## 5.2 create full project + sqlite db
 
 ```bash
-bundle exec serrano new my_app --db=sqlite
+serrano new my_app --db=sqlite
 ```
 
 Adds sqlite dependency and DB config.
@@ -157,7 +157,7 @@ Adds sqlite dependency and DB config.
 ## 5.3 minimal project
 
 ```bash
-bundle exec serrano new my_app --minimal
+serrano new my_app --minimal
 ```
 
 Only boot files, no app/db scaffolding.
@@ -165,7 +165,7 @@ Only boot files, no app/db scaffolding.
 ## 5.4 minimal + db
 
 ```bash
-bundle exec serrano new my_app --minimal --db=postgres
+serrano new my_app --minimal --db=postgres
 ```
 
 Orthogonal behavior: `--minimal` does not disable DB files.
@@ -185,7 +185,7 @@ bundle exec rackup
 ### 6.1 scaffold full resource
 
 ```bash
-bundle exec serrano generate resource Article title:string content:text
+serrano generate resource Article title:string content:text
 ```
 
 Creates:
@@ -200,9 +200,9 @@ Creates:
 ### 6.2 generate individual files
 
 ```bash
-bundle exec serrano generate controller Comments
-bundle exec serrano generate service Reports::Monthly
-bundle exec serrano generate repository Comment
+serrano generate controller Comments
+serrano generate service Reports::Monthly
+serrano generate repository Comment
 ```
 
 ---
