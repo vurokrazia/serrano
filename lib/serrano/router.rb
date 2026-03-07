@@ -2,7 +2,7 @@
 
 module Serrano
   class Router
-    SUPPORTED_METHODS = %w[GET POST PUT].freeze
+    SUPPORTED_METHODS = %w[GET POST PUT DELETE].freeze
 
     def initialize
       @routes = SUPPORTED_METHODS.to_h { |method| [method, {}] }

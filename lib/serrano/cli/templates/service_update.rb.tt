@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../entities/<%= resource[:singular_snake] %>"
 require_relative "../../repositories/<%= resource[:singular_snake] %>_repository"
 
 module <%= resource[:plural_camel] %>
@@ -10,7 +11,27 @@ module <%= resource[:plural_camel] %>
       end
 
       def call(id, params)
-        <%= resource[:singular_snake] %> = @repository.update(id.to_i, params)
+        attrs = params.each_with_object({}) { |(key, value), memo| memo[key.to_sym] = value }
+<% fields.each do |field| -%>
+<% if field[:immutable] -%>
+        if attrs.key?(:<%= field[:name] %>)
+          return { ok: false, errors: ["<%= field[:name] %> is immutable"] }
+        end
+<% end -%>
+<% end -%>
+
+        validation = <%= resource[:singular_camel] %>.validate(params)
+        return { ok: false, errors: validation[:errors] } unless validation[:ok]
+<% fields.each do |field| -%>
+<% if field[:unique] -%>
+        if validation[:attrs].key?(:<%= field[:name] %>) && !validation[:attrs][:<%= field[:name] %>].nil? &&
+           @repository.exists_by?(:<%= field[:name] %>, validation[:attrs][:<%= field[:name] %>], except_id: id.to_i)
+          return { ok: false, errors: ["<%= field[:name] %> has already been taken"] }
+        end
+<% end -%>
+<% end -%>
+
+        <%= resource[:singular_snake] %> = @repository.update(id.to_i, validation[:attrs])
         return { ok: false, errors: ["<%= resource[:singular_snake] %> not found"] } unless <%= resource[:singular_snake] %>
 
         { ok: true, <%= resource[:singular_snake] %>: <%= resource[:singular_snake] %> }

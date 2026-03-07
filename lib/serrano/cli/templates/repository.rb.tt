@@ -17,6 +17,12 @@ class <%= resource[:singular_camel] %>Repository
     row && <%= resource[:singular_camel] %>.new(row)
   end
 
+  def exists_by?(field, value, except_id: nil)
+    scope = @dataset.where(field => value)
+    scope = scope.exclude(id: except_id) if except_id
+    !scope.first.nil?
+  end
+
   def create(attrs)
     now = Time.now
     id = @dataset.insert(attrs.merge(created_at: now, updated_at: now))

@@ -13,11 +13,11 @@ module Serrano
         field_rows = parse_fields(fields)
         context = template_context(
           resource: resource,
-          fields: field_rows,
-          required_field: field_rows.first
+          fields: field_rows
         )
 
         write_template("controller.rb.tt", target_path("app/controllers/#{resource[:plural_snake]}_controller.rb"), context)
+        write_template("entity_validatable.rb.tt", target_path("app/entities/concerns/validatable.rb"), context)
         write_template("service_index.rb.tt", target_path("app/services/#{resource[:plural_snake]}/index.rb"), context)
         write_template("service_show.rb.tt", target_path("app/services/#{resource[:plural_snake]}/show.rb"), context)
         write_template("service_create.rb.tt", target_path("app/services/#{resource[:plural_snake]}/create.rb"), context)
@@ -33,7 +33,7 @@ module Serrano
         puts "app.get \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :show"
         puts "app.post \"/#{resource[:plural_snake]}\", #{resource[:plural_camel]}Controller, :create"
         puts "app.put \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :update"
-        puts "app.post \"/#{resource[:plural_snake]}/:id/destroy\", #{resource[:plural_camel]}Controller, :destroy"
+        puts "app.delete \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :destroy"
       end
 
       desc "controller NAME", "Generate a controller"
@@ -108,10 +108,77 @@ module Serrano
 
       def parse_fields(fields)
         fields.map do |field|
-          name, type = field.split(":", 2)
+          parts = field.split(":")
+          name = parts[0]
+          type = parts[1]
+          flags = parts[2..] || []
           next if name.to_s.empty? || type.to_s.empty?
 
-          { name: name, ruby_type: migration_type(type) }
+          metadata = {
+            name: name,
+            ruby_type: migration_type(type),
+            required: false,
+            unique: false,
+            immutable: false,
+            min: nil,
+            max: nil,
+            format: nil,
+            inclusion: nil,
+            exclusion: nil,
+            range_min: nil,
+            range_max: nil,
+            numericality: false,
+            numericality_integer: type == "integer"
+          }
+
+          flags.each do |flag|
+            case flag
+            when "required"
+              metadata[:required] = true
+            when "unique"
+              metadata[:unique] = true
+            when "immutable"
+              metadata[:immutable] = true
+            when "int", "integer"
+              metadata[:numericality_integer] = true
+            when "num", "numeric"
+              metadata[:numericality] = true
+            else
+              if (match = flag.match(/\Amin=(\d+)\z/))
+                metadata[:min] = match[1].to_i
+              elsif (match = flag.match(/\Amax=(\d+)\z/))
+                metadata[:max] = match[1].to_i
+              elsif (match = flag.match(/\Aformat=(.+)\z/))
+                metadata[:format] = match[1]
+              elsif (match = flag.match(/\Ain=(.+)\z/))
+                metadata[:inclusion] = match[1].split("|")
+              elsif (match = flag.match(/\Aexclude=(.+)\z/))
+                metadata[:exclusion] = match[1].split("|")
+              elsif (match = flag.match(/\Arange=(-?\d+)\.\.(-?\d+)\z/))
+                metadata[:range_min] = match[1].to_i
+                metadata[:range_max] = match[2].to_i
+              end
+            end
+          end
+
+          metadata[:numericality] = true if metadata[:numericality_integer]
+
+          {
+            name: metadata[:name],
+            ruby_type: metadata[:ruby_type],
+            required: metadata[:required],
+            unique: metadata[:unique],
+            immutable: metadata[:immutable],
+            min: metadata[:min],
+            max: metadata[:max],
+            format: metadata[:format],
+            inclusion: metadata[:inclusion],
+            exclusion: metadata[:exclusion],
+            range_min: metadata[:range_min],
+            range_max: metadata[:range_max],
+            numericality: metadata[:numericality],
+            numericality_integer: metadata[:numericality_integer]
+          }
         end.compact
       end
 
@@ -173,7 +240,7 @@ module Serrano
           "app.get \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :show\n",
           "app.post \"/#{resource[:plural_snake]}\", #{resource[:plural_camel]}Controller, :create\n",
           "app.put \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :update\n",
-          "app.post \"/#{resource[:plural_snake]}/:id/destroy\", #{resource[:plural_camel]}Controller, :destroy\n"
+          "app.delete \"/#{resource[:plural_snake]}/:id\", #{resource[:plural_camel]}Controller, :destroy\n"
         ]
 
         changed = false

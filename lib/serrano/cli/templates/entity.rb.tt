@@ -1,6 +1,38 @@
 # frozen_string_literal: true
 
+require_relative "./concerns/validatable"
+
 class <%= resource[:singular_camel] %>
+  include Validatable
+
+<% fields.each do |field| -%>
+<% rules = [] -%>
+<% rules << "presence: true" if field[:required] -%>
+<% if field[:min] || field[:max] -%>
+<% length_parts = [] -%>
+<% length_parts << "min: #{field[:min]}" if field[:min] -%>
+<% length_parts << "max: #{field[:max]}" if field[:max] -%>
+<% rules << "length: { #{length_parts.join(', ')} }" -%>
+<% end -%>
+<% rules << "format: /#{field[:format].gsub('/', '\/')}/" if field[:format] -%>
+<% rules << "inclusion: #{field[:inclusion].inspect}" if field[:inclusion] -%>
+<% rules << "exclusion: #{field[:exclusion].inspect}" if field[:exclusion] -%>
+<% if field[:range_min] || field[:range_max] -%>
+<% range_parts = [] -%>
+<% range_parts << "min: #{field[:range_min]}" if field[:range_min] -%>
+<% range_parts << "max: #{field[:range_max]}" if field[:range_max] -%>
+<% rules << "range: { #{range_parts.join(', ')} }" -%>
+<% end -%>
+<% if field[:numericality_integer] -%>
+<% rules << "numericality: { only_integer: true }" -%>
+<% elsif field[:numericality] -%>
+<% rules << "numericality: true" -%>
+<% end -%>
+<% if rules.any? -%>
+  validates :<%= field[:name] %>, <%= rules.join(", ") %>
+<% end -%>
+<% end -%>
+
   def initialize(attrs = {})
     @attrs = attrs || {}
   end

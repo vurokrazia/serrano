@@ -20,7 +20,7 @@ module Serrano
     def params
       @params ||= begin
         req = rack_request
-        req.GET.merge(req.POST).merge(@path_params)
+        req.GET.merge(post_params(req)).merge(@path_params)
       end
     end
 
@@ -58,6 +58,21 @@ module Serrano
 
     def rack_request
       @rack_request ||= Rack::Request.new(env)
+    end
+
+    def post_params(request)
+      return {} unless parseable_body?
+
+      request.POST
+    rescue StandardError
+      {}
+    end
+
+    def parseable_body?
+      content_length = env["CONTENT_LENGTH"].to_s
+      transfer_encoding = env["HTTP_TRANSFER_ENCODING"].to_s
+
+      content_length != "" && content_length != "0" || transfer_encoding != ""
     end
   end
 end

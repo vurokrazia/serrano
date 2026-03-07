@@ -21,6 +21,10 @@ module Serrano
       @router.add('PUT', path, controller, action)
     end
 
+    def delete(path, controller, action)
+      @router.add('DELETE', path, controller, action)
+    end
+
     def call(env)
       @dispatcher.call(env)
     end

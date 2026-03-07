@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../entities/<%= resource[:singular_snake] %>"
 require_relative "../../repositories/<%= resource[:singular_snake] %>_repository"
 
 module <%= resource[:plural_camel] %>
@@ -10,9 +11,16 @@ module <%= resource[:plural_camel] %>
       end
 
       def call(params)
-<% if required_field -%>
-        required_value = params["<%= required_field[:name] %>"].to_s.strip
-        return { ok: false, errors: ["<%= required_field[:name] %> is required"] } if required_value.empty?
+        validation = <%= resource[:singular_camel] %>.validate(params)
+        return { ok: false, errors: validation[:errors] } unless validation[:ok]
+
+        attrs = validation[:attrs]
+<% fields.each do |field| -%>
+<% if field[:unique] -%>
+        if attrs.key?(:<%= field[:name] %>) && !attrs[:<%= field[:name] %>].nil? && @repository.exists_by?(:<%= field[:name] %>, attrs[:<%= field[:name] %>])
+          return { ok: false, errors: ["<%= field[:name] %> has already been taken"] }
+        end
+<% end -%>
 <% end -%>
 
         <%= resource[:singular_snake] %> = @repository.create(
@@ -20,7 +28,7 @@ module <%= resource[:plural_camel] %>
           {}
 <% else -%>
 <% fields.each_with_index do |field, index| -%>
-          "<%= field[:name] %>" => params["<%= field[:name] %>"]<%= "," unless index == fields.length - 1 %>
+          <%= field[:name].to_sym.inspect %> => attrs[<%= field[:name].to_sym.inspect %>]<%= "," unless index == fields.length - 1 %>
 <% end -%>
 <% end -%>
         )

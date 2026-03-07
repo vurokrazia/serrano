@@ -5,10 +5,15 @@ Sequel.migration do
     create_table(:<%= resource[:plural_snake] %>) do
       primary_key :id
 <% fields.each do |field| -%>
-      <%= field[:ruby_type] %> :<%= field[:name] %>
+      <%= field[:ruby_type] %> :<%= field[:name] %><%= field[:required] ? ", null: false" : "" %>
 <% end -%>
       DateTime :created_at, null: false
       DateTime :updated_at, null: false
     end
+<% fields.each do |field| -%>
+<% if field[:unique] -%>
+    add_index :<%= resource[:plural_snake] %>, :<%= field[:name] %>, unique: true
+<% end -%>
+<% end -%>
   end
 end
