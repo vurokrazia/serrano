@@ -111,11 +111,11 @@ The CLI is optional and depends on the core runtime.
 ### Available commands
 
 ```bash
-bundle exec serrano new APP_NAME [--minimal] [--db=sqlite|postgres|mysql]
-bundle exec serrano generate resource Article title:string content:text
-bundle exec serrano generate controller Name
-bundle exec serrano generate service Namespace::Name
-bundle exec serrano generate repository Name
+serrano new APP_NAME [--minimal] [--db=sqlite|postgres|mysql]
+serrano generate resource Article title:string content:text
+serrano generate controller Name
+serrano generate service Namespace::Name
+serrano generate repository Name
 ```
 
 - `new` creates project files (minimal mode and DB options are orthogonal)
