@@ -17,6 +17,6 @@ class UnknownRouteTest < Minitest::Test
 
     assert_equal 404, response.status
     assert_includes response.headers['content-type'], 'application/json'
-    assert_equal({ 'error' => 'Not Found' }, JSON.parse(response.body))
+    assert_equal({ 'error' => 'Not Found', 'path' => '/missing' }, JSON.parse(response.body))
   end
 end
